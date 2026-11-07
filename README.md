@@ -4,7 +4,7 @@
 
 > **Status: design stage.** There's no code yet. This README describes what's being built and how each claim will be tested. Measured results will replace the plans below as each piece lands. The full design doc (architecture, data model, failure modes, security model) is being revised and will be added under `docs/`.
 
-Proofwork is a platform for running AI agents against outcomes that can be checked. You say what "done" means and the most you're willing to spend. Proofwork runs agents in isolated sandboxes, checks each result with an independent verifier in a fresh sandbox, and keeps iterating until the outcome is verified or the budget runs out. Every run is durable, streamable and itemised to the cent.
+Proofwork is a platform for running AI agents against outcomes that can be checked. You say what "done" means and the most you're willing to spend. Proofwork runs agents in isolated sandboxes, checks each result with an independent verifier in a fresh sandbox, and keeps iterating until the stated criteria pass or the budget runs out. Every run is durable, streamable and itemised to the cent.
 
 ## The problem
 
@@ -33,7 +33,7 @@ Proofwork handles everything about *how*. Every outcome ends in one of four stat
 
 | Status | Meaning |
 |---|---|
-| `succeeded` | The verifier passed every criterion on a clean copy of the workspace. |
+| `succeeded` | Every stated criterion passed on a clean copy of the workspace. The receipt says "stated criteria passed" and lists each check that ran, because a verifier can only prove the criteria it was given, not the goal itself. |
 | `budget_exhausted` | Money, tokens or time ran out. Returns the best partial attempt and how close it got. |
 | `failed` | Stopped for another reason: the agent got stuck, or the environment broke. |
 | `cancelled` | Stopped by the developer. |
@@ -54,7 +54,7 @@ flowchart LR
 | Claim | How it's tested |
 |---|---|
 | **Verifier soundness.** `succeeded` means the stated criteria passed on a clean copy of the workspace with only the attempt's diff applied. | Tamper injection: attempts that edit protected tests, test configs or test scripts, or leave state behind in their own sandbox. Target: none accepted. |
-| **Criteria adequacy.** How often the criteria pass when the goal wasn't really met. | False-pass rate against hidden tests the agent never sees. Measured and published, not promised as zero. |
+| **Criteria adequacy.** How often the criteria pass when the goal wasn't really met. | False-pass rate against hidden tests the agent never sees, including deliberately underspecified tasks where the visible tests can pass while the goal isn't met (for example, a date parser that ignores time zones). Measured and published, not promised as zero. |
 | **No budget overshoot.** Model spend never exceeds the limit, including with parallel attempts and crashes. | Property tests over random interleavings of reserve, settle and crash, plus a check on every call that the actual cost stayed within the reservation. |
 | **Durable runs.** Crashes and disconnects never lose or duplicate events. | Chaos suite: kill workers and runners mid-step, drop client streams, expire leases early. |
 
@@ -88,7 +88,7 @@ The core is built local-first: TypeScript on Node, SQLite, and Docker with gViso
 
 ## Evaluation plan
 
-About 40 tasks written for this project: bug fixes with hidden tests, small features, data transformations, tasks with awkward setup, and long tasks that overflow the context window. Hidden tests and reference solutions are kept out of this public repo, and agents get no network access to code hosts during eval runs.
+About 40 tasks written for this project: bug fixes with hidden tests, small features, data transformations, tasks with awkward setup, long tasks that overflow the context window, and deliberately underspecified goals where the visible tests can pass while the goal isn't really met. Hidden tests and reference solutions are kept out of this public repo, and agents get no network access to code hosts during eval runs.
 
 | ID | Question |
 |---|---|

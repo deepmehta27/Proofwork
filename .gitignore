@@ -1,0 +1,10 @@
+# Personal Claude Code setup: CLAUDE.md, settings, hooks
+.claude/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+node_modules/
+.DS_Store
